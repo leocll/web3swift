@@ -204,6 +204,7 @@ extension ABIv2Decoder {
                     let preambula = BigUInt(32).abiEncode(bits: 256)!
                     return (preambula + Data(dataSlice), nextElement)
                 } else if case .dynamicBytes = type {
+                    //same 3 lines as above?
                     let nextElement = pointer + type.memoryUsage
                     let preambula = BigUInt(32).abiEncode(bits: 256)!
                     return (preambula + Data(dataSlice), nextElement)
