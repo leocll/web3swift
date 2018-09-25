@@ -26,7 +26,7 @@ extension ABIv2Decoder {
         var toReturn = [AnyObject]()
         var consumed: UInt64 = 0
         for i in 0 ..< types.count {
-            let (v, c) = decodeSignleType(type: types[i], data: data, pointer: consumed)
+            let (v, c) = decodeSingleType(type: types[i], data: data, pointer: consumed)
             guard let valueUnwrapped = v, let consumedUnwrapped = c else {return nil}
             toReturn.append(valueUnwrapped)
             consumed = consumed + consumedUnwrapped
@@ -35,7 +35,7 @@ extension ABIv2Decoder {
         return toReturn
     }
     
-    public static func decodeSignleType(type: ABIv2.Element.ParameterType, data: Data, pointer: UInt64 = 0) -> (value: AnyObject?, bytesConsumed: UInt64?) {
+    public static func decodeSingleType(type: ABIv2.Element.ParameterType, data: Data, pointer: UInt64 = 0) -> (value: AnyObject?, bytesConsumed: UInt64?) {
         let (elData, nextPtr) = followTheData(type: type, data: data, pointer: pointer)
         guard let elementItself = elData, let nextElementPointer = nextPtr else {
             return (nil, nil)
@@ -114,7 +114,7 @@ extension ABIv2Decoder {
                     var subpointer: UInt64 = 32;
                     var toReturn = [AnyObject]()
                     for _ in 0 ..< length {
-                        let (v, c) = decodeSignleType(type: subType, data: elementItself, pointer: subpointer)
+                        let (v, c) = decodeSingleType(type: subType, data: elementItself, pointer: subpointer)
                         guard let valueUnwrapped = v, let consumedUnwrapped = c else {break}
                         toReturn.append(valueUnwrapped)
                         subpointer = subpointer + consumedUnwrapped
@@ -131,7 +131,7 @@ extension ABIv2Decoder {
                     var toReturn = [AnyObject]()
 //                    print("Dynamic array sub element itself: \n" + dataSlice.toHexString())
                     for _ in 0 ..< length {
-                        let (v, c) = decodeSignleType(type: subType, data: dataSlice, pointer: subpointer)
+                        let (v, c) = decodeSingleType(type: subType, data: dataSlice, pointer: subpointer)
                         guard let valueUnwrapped = v, let consumedUnwrapped = c else {break}
                         toReturn.append(valueUnwrapped)
                         subpointer = subpointer + consumedUnwrapped
@@ -144,7 +144,7 @@ extension ABIv2Decoder {
                 var toReturn = [AnyObject]()
                 var consumed:UInt64 = 0
                 for _ in 0 ..< length {
-                    let (v, c) = decodeSignleType(type: subType, data: elementItself, pointer: consumed)
+                    let (v, c) = decodeSingleType(type: subType, data: elementItself, pointer: consumed)
                     guard let valueUnwrapped = v, let consumedUnwrapped = c else {return (nil, nil)}
                     toReturn.append(valueUnwrapped)
                     consumed = consumed + consumedUnwrapped
@@ -162,7 +162,7 @@ extension ABIv2Decoder {
             var toReturn = [AnyObject]()
             var consumed:UInt64 = 0
             for i in 0 ..< subTypes.count {
-                let (v, c) = decodeSignleType(type: subTypes[i], data: elementItself, pointer: consumed)
+                let (v, c) = decodeSingleType(type: subTypes[i], data: elementItself, pointer: consumed)
                 guard let valueUnwrapped = v, let consumedUnwrapped = c else {return (nil, nil)}
                 toReturn.append(valueUnwrapped)
                 consumed = consumed + consumedUnwrapped
@@ -198,7 +198,7 @@ extension ABIv2Decoder {
             let dataSlice = data[pointer ..< pointer + type.memoryUsage]
             let bn = BigUInt(dataSlice)
             if bn > UINT64_MAX || bn >= data.count {
-                // there are ERC20 contracts that use bytes32 intead of string. Let's be optimistic and return some data
+                // there are ERC20 contracts that use bytes32 instead of string. Let's be optimistic and return some data
                 if case .string = type {
                     let nextElement = pointer + type.memoryUsage
                     let preambula = BigUInt(32).abiEncode(bits: 256)!
@@ -245,11 +245,11 @@ extension ABIv2Decoder {
             let data = logs[i+1]
             let input = indexedInputs[i]
             if !input.type.isStatic || input.type.isArray || input.type.memoryUsage != 32 {
-                let (v, _) = ABIv2Decoder.decodeSignleType(type: .bytes(length: 32), data: data)
+                let (v, _) = ABIv2Decoder.decodeSingleType(type: .bytes(length: 32), data: data)
                 guard let valueUnwrapped = v else {return nil}
                 indexedValues.append(valueUnwrapped)
             } else {
-                let (v, _) = ABIv2Decoder.decodeSignleType(type: input.type, data: data)
+                let (v, _) = ABIv2Decoder.decodeSingleType(type: input.type, data: data)
                 guard let valueUnwrapped = v else {return nil}
                 indexedValues.append(valueUnwrapped)
             }
