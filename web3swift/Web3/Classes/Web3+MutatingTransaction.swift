@@ -96,9 +96,20 @@ public class WriteTransaction: ReadTransaction {
                 guard case .fulfilled(let nonce) = results[0] else {
                     throw Web3Error.processingError(desc: "Failed to fetch nonce")
                 }
-                guard case .fulfilled(let gasEstimate) = results[1] else {
-                    throw Web3Error.processingError(desc: "Failed to fetch gas estimate")
+//                guard case .fulfilled(let gasEstimate) = results[1] else {
+//                    throw Web3Error.processingError(desc: "Failed to fetch gas estimate")
+//                }
+                
+                var gasEstimate: BigUInt = BigUInt(0)
+                switch results[1] {
+                case .fulfilled(let value):
+                    gasEstimate = value
+                default:
+                    guard let gasLimit = mergedOptions.gasLimit, case .manual(_) = gasLimit else {
+                        throw Web3Error.processingError(desc: "Failed to fetch gas estimate")
+                    }
                 }
+                
                 guard case .fulfilled(let gasPrice) = results[2] else {
                     throw Web3Error.processingError(desc: "Failed to fetch gas price")
                 }
@@ -115,6 +126,9 @@ public class WriteTransaction: ReadTransaction {
                 assembledTransaction.nonce = nonce
                 assembledTransaction.gasLimit = estimate
                 assembledTransaction.gasPrice = finalGasPrice
+                if let value = mergedOptions.value {
+                    assembledTransaction.value = value
+                }
                 
                 forAssemblyPipeline = (assembledTransaction, self.contract, mergedOptions)
                 
